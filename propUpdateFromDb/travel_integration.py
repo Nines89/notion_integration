@@ -75,21 +75,24 @@ class TravelButton(NotionPage):
                 google_script_matrix = []
                 db = NotionDatabase(db_token=db_id, key=self.SECRET)
                 db.retrieve_children_ids()
-                for page in db.children_pages:
-                    travel_page = TravelSpecific(page_token=page)
-                    travel_page.build_calculation()
-                    google_script_matrix.append([
-                        travel_page.page_properties['Travel Method']['title'][0]['plain_text'],
-                        (lambda h: int(h.split(':')[0]) * 60 + int(h.split(':')[1]))(travel_page.ch_prop['Duration - hh:mm']),
-                        travel_page.ch_prop['Total Amount']
-                    ])
-                    travel_page.update_parent()
-                if idx:
-                    REQUEST['parameters'][0] = RET_SS
+                if db.children_pages:
+                    for page in db.children_pages:
+                        travel_page = TravelSpecific(page_token=page)
+                        travel_page.build_calculation()
+                        google_script_matrix.append([
+                            travel_page.page_properties['Travel Method']['title'][0]['plain_text'],
+                            (lambda h: int(h.split(':')[0]) * 60 + int(h.split(':')[1]))(travel_page.ch_prop['Duration - hh:mm']),
+                            travel_page.ch_prop['Total Amount']
+                        ])
+                        travel_page.update_parent()
+                    if idx:
+                        REQUEST['parameters'][0] = RET_SS
+                    else:
+                        REQUEST['parameters'][0] = DEP_SS
+                    REQUEST['parameters'][1] = google_script_matrix
+                    UpdateSpreadsheet(scopes=SCOPES, scrip_id=SCRIPT_ID, request=REQUEST)
                 else:
-                    REQUEST['parameters'][0] = DEP_SS
-                REQUEST['parameters'][1] = google_script_matrix
-                UpdateSpreadsheet(scopes=SCOPES, scrip_id=SCRIPT_ID, request=REQUEST)
+                    print('No pages in DB')
         else:
             raise ValueError('No DB-ID are saved')
 
