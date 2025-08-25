@@ -64,7 +64,7 @@ class TravelButton(NotionPage):
             self.retrieve_children()
         for child in self.children:
             if child['type'] == 'child_database':
-                if child['child_database']['title'] != 'Choices':
+                if child['child_database']['title'].strip() != 'Choices':
                     self.dbs_id.append(child['id'])
                 else:
                     self.choice_id = child['id']
@@ -85,10 +85,12 @@ class TravelButton(NotionPage):
                             travel_page.ch_prop['Total Amount']
                         ])
                         travel_page.update_parent()
-                    if idx:
+                    if idx == 2:
                         REQUEST['parameters'][0] = RET_SS
-                    else:
+                    elif idx == 1:
                         REQUEST['parameters'][0] = DEP_SS
+                    else:
+                        continue
                     REQUEST['parameters'][1] = google_script_matrix
                     UpdateSpreadsheet(scopes=SCOPES, scrip_id=SCRIPT_ID, request=REQUEST)
                 else:
@@ -114,9 +116,9 @@ class TravelButton(NotionPage):
                                 chosen_props = chosen_one_page.page_properties
                                 tot_amount += float(chosen_props['Total Amount']['number'])
                                 method = chosen_props['Travel Method']['title'][0]['plain_text']
-                                if not idx:
+                                if idx == 0:
                                     dep_met = method
-                                else:
+                                elif idx == 1:
                                     back_met = method
             if self.choice_id and tot_amount and back_met and dep_met:
                 # Copia dalle API ################################################################

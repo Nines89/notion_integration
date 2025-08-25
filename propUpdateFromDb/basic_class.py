@@ -145,8 +145,6 @@ class NotionPage(NotionIntegration):
                     else:
                         raise ValueError('New Element have to be a string')
                 break
-        else:
-            raise ValueError('Property Name does not exist')
 
     def load_properties(self):
         response = requests.patch(self.page, json={'properties': self.page_properties}, headers=self.headers)
