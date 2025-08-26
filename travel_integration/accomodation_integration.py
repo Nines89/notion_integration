@@ -21,7 +21,7 @@ REQUEST = {
     "function": "fillExcel",
     "parameters": [None, None]
 }
-SCRIPT_ID = "AKfycbzYnNkuoQGFB7qsvFnzw-YHQ125k5BILWUuYdMTWa9D6fL7Nnn4C4LdwZjz3WZjK7rE"
+SCRIPT_ID = "AKfycbw_Dmw3BJgBEDDUpSeDd3N32YaG2yW3JhkLZlVJdLWg6VGRrELRECSKq231R-1Wsa4J"
 
 
 def date_parser(date: str) -> (int, int, int, int, int, int, int):

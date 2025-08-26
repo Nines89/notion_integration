@@ -41,7 +41,7 @@ SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 REQUEST = {"function": "fillExcel", "parameters": [ None,
                                                     None
                                                     ]}
-SCRIPT_ID = "AKfycbzYnNkuoQGFB7qsvFnzw-YHQ125k5BILWUuYdMTWa9D6fL7Nnn4C4LdwZjz3WZjK7rE"
+SCRIPT_ID = "AKfycbw_Dmw3BJgBEDDUpSeDd3N32YaG2yW3JhkLZlVJdLWg6VGRrELRECSKq231R-1Wsa4J"
 
 def date_parser(date: str) -> (int, int, int, int, int, int, int):
     return int(date[0:4]), int(date[5:7]), int(date[8:10]), int(date[11:13]), int(date[14:16]), int(date[17:19])
