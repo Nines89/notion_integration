@@ -15,12 +15,12 @@ r"""
 5. -> modify_db_page (commenta tutto quello che riguarda i grafici)
 """
 
-DEP_SS = '1fHsrb8oRcN13gh0lAoou1Kz43nSELVHVZufN9ps5O6k'
-RET_SS = '1wPeMl4liRc-7Kk9Z7IQhnvRrnhSp6c9GliwC_h_Vyhc'
+ACC_SS = '1dTVnF0qZypEtE8LM_fUSPcxFfhMfipo_KdpdnO7WUaE'
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-REQUEST = {"function": "fillExcel", "parameters": [None,
-                                                   None
-                                                   ]}
+REQUEST = {
+    "function": "fillExcel",
+    "parameters": [None, None]
+}
 SCRIPT_ID = "AKfycbzYnNkuoQGFB7qsvFnzw-YHQ125k5BILWUuYdMTWa9D6fL7Nnn4C4LdwZjz3WZjK7rE"
 
 
@@ -59,35 +59,29 @@ class AccommodationButton(NotionPage):
                 db.retrieve_children_ids()
                 if db.children_pages:
                     for page in db.children_pages:
-                        accom_page = AccomodationSpecific(page_token=page)
+                        accom_page = AccommodationSpecific(page_token=page)
                         accom_page.build_calculation()
-                        # google_script_matrix.append([
-                        #     accom_page.page_properties['Travel Method']['title'][0]['plain_text'],
-                        #     (lambda h: int(h.split(':')[0]) * 60 + int(h.split(':')[1]))(
-                        #         accom_page.ch_prop['Duration - hh:mm']),
-                        #     accom_page.ch_prop['Total Amount']
-                        # ])
+                        google_script_matrix.append([
+                            accom_page.page_properties['Name']['title'][0]['plain_text'],
+                            accom_page.ch_prop['Total Price'],
+                            accom_page.ch_prop['Distance From (m)'],
+                        ])
                         accom_page.update_parent()
-                    # if idx == 2:
-                    #     REQUEST['parameters'][0] = RET_SS
-                    # elif idx == 1:
-                    #     REQUEST['parameters'][0] = DEP_SS
-                    # else:
-                    #     continue
-                    # REQUEST['parameters'][1] = google_script_matrix
-                    # UpdateSpreadsheet(scopes=SCOPES, scrip_id=SCRIPT_ID, request=REQUEST)
+                    REQUEST['parameters'][0] = ACC_SS
+                    REQUEST['parameters'][1] = google_script_matrix
+                    UpdateSpreadsheet(scopes=SCOPES, scrip_id=SCRIPT_ID, request=REQUEST)
                 else:
                     print('No pages in DB')
         else:
             raise ValueError('No DB-ID are saved')
 
     def fil_choices(self):
-        dep_met = None
+        res_name = None
         tot_amount = 0
-        back_met = None
+        address = None
 
         if self.dbs_id:
-            for idx, db_id in enumerate(self.dbs_id):
+            for db_id in self.dbs_id:
                 db = NotionDatabase(db_token=db_id, key=self.SECRET)
                 for prop, obj_id in db.db_properties.items():
                     if prop == 'Choice':
@@ -95,48 +89,37 @@ class AccommodationButton(NotionPage):
                         for kind in column['Choice']:
                             if kind[1]:
                                 chosen_one_id = kind[0]
-                                chosen_one_page = TravelSpecific(chosen_one_id)
+                                chosen_one_page = AccommodationSpecific(chosen_one_id)
                                 chosen_props = chosen_one_page.page_properties
-                                tot_amount += float(chosen_props['Total Amount']['number'])
-                                method = chosen_props['Travel Method']['title'][0]['plain_text']
-                                if idx == 0:
-                                    dep_met = method
-                                elif idx == 1:
-                                    back_met = method
-            if self.choice_id and tot_amount and back_met and dep_met:
+                                tot_amount = float(chosen_props['Total Price']['number'])
+                                res_name = chosen_props['Name']['title'][0]['plain_text']
+                                address = chosen_props['Address']['rich_text'][0]['plain_text']
+
+            if self.choice_id and tot_amount and res_name:
                 # Copia dalle API ################################################################
                 url = 'https://api.notion.com/v1/pages'
                 data_info = {
                     "parent": {"database_id": self.choice_id.replace('-', '')},
                     "properties": {
-                        "Back and Forth": {
+                        "Name": {
                             "title": [
                                 {
                                     "text": {
-                                        "content": "Travel To"
+                                        "content": res_name
                                     }
                                 }
                             ]
                         },
-                        "Departure Method": {
+                        "Address": {
                             "rich_text": [
                                 {
                                     "text": {
-                                        "content": dep_met
+                                        "content": address
                                     }
                                 }
                             ]
                         },
-                        "Return Method": {
-                            "rich_text": [
-                                {
-                                    "text": {
-                                        "content": back_met
-                                    }
-                                }
-                            ]
-                        },
-                        "Total Travel Amount": {"number": tot_amount},
+                        "Total Price": {"number": tot_amount},
                     },
                 }
                 ################################################################
@@ -146,7 +129,7 @@ class AccommodationButton(NotionPage):
                         f"Function Failed with: {response}:\n\t\t {response.json()['message']}")
 
 
-class AccomodationSpecific(NotionPage):
+class AccommodationSpecific(NotionPage):
     section_db = None
     SECRET = "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"
     ch_prop: dict[str, Any] = {
@@ -211,12 +194,17 @@ def main_build_info(page_link: str):
     button_page.retrieve_children()
     button_page.modify_db_page()
 
+def main_fil_choice(page_link: str):
+    button_page = AccommodationButton(page_token=id_by_link(
+        page_link
+    ))
+    button_page.fil_choices()
+
 
 if __name__ == '__main__':
     st_time = time.time()
-    acc_button = AccommodationButton(
-         id_by_link('https://www.notion.so/Accommodation-248b7a8f729480e79e36cf24462f8348?source=copy_link'))
-    acc_button.modify_db_page()
+    # main_fil_choice("https://www.notion.so/Accommodation-248b7a8f729480e79e36cf24462f8348?source=copy_link")
+    main_build_info("https://www.notion.so/Accommodation-248b7a8f729480e79e36cf24462f8348?source=copy_link")
     print('TOT time: ', time.time() - st_time)
 
 # travel_page = TravelSpecific(page_token=id_by_link(
@@ -230,4 +218,9 @@ if __name__ == '__main__':
 #         id_by_link('https://www.notion.so/Accommodation-Specific-25ab7a8f729480d18826d4d06a40a019?source=copy_link'))
 # accommodation_page.build_calculation()
 # accommodation_page.update_parent()
+
+
+# acc_button = AccommodationButton(
+#          id_by_link('https://www.notion.so/Accommodation-248b7a8f729480e79e36cf24462f8348?source=copy_link'))
+# acc_button.fil_choices()
 

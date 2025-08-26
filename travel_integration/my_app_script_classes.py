@@ -62,6 +62,7 @@ class ScriptAuth(ABC):
                         break
                 else:
                     file_name = find_file_by_scopes(scopes)
+                    print(file_name)
                     existing_files[file_name] = scopes
                     cls._token = os.path.join(JSON_FOLDER, file_name)
                     flow = InstalledAppFlow.from_client_secrets_file(
