@@ -204,6 +204,13 @@ class AccomodationSpecific(NotionPage):
         else:
             raise ValueError("Property dictionary is empty")
 
+def main_build_info(page_link: str):
+    button_page = AccommodationButton(page_token=id_by_link(
+        page_link
+    ))
+    button_page.retrieve_children()
+    button_page.modify_db_page()
+
 
 if __name__ == '__main__':
     st_time = time.time()
