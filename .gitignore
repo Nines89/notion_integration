@@ -4,3 +4,4 @@ auth_json
 file_server/.idea
 travel_integration/.idea
 travel_integration/__pycache__
+travel_integration/lib/__pycache__
