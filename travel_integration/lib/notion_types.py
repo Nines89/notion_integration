@@ -51,7 +51,7 @@ class NDate(BASECLASSS):
 
 class NFileTypeFile(BASECLASSS):
     def __init__(self, block: dict = None):
-        self.data : dict[str, datetime | None] = {
+        self.data: dict[str, datetime | None] = {
             "url": None,
             "expiry_time": None
         }
@@ -80,7 +80,6 @@ class NFileTypeUpload(BASECLASSS):
             "id": None,
         }
         self.get_file_info(block)
-
 
     def get_file_info(self, blck_info: dict):
         self.data['id'] = blck_info['file_upload']['id']
@@ -126,9 +125,22 @@ def n_file(_obj: dict) -> BASECLASSS:
         raise TypeError("Unknown object type")
 
 
+def n_icon(_obj: dict) -> BASECLASSS:
+    type_of_object = _obj['type']
+    mapping = {
+        "external": n_file,
+        "file_upload": n_file,
+        "emoji": NEmoji,
+    }
+    try:
+        return mapping[type_of_object](_obj)
+    except KeyError:
+        raise TypeError("Unknown object type")
+
+
 class NUser(BASECLASSS):
     def __init__(self, block: dict = None):
-        if block['object'] is not 'user':
+        if block['object'] != 'user':
             raise ValueError("Block object must be 'user', you're using the wrong class")
         self.data: dict[str, datetime | None] = {
             "id": None,
@@ -144,3 +156,19 @@ class NUser(BASECLASSS):
             "id": _id
         }
 
+
+class NEmoji(BASECLASSS):
+    def __init__(self, block: dict = None):
+        self.data: dict[str, datetime | None] = {
+            "emoji": None,
+        }
+        self.get_file_info(block)
+
+    def get_file_info(self, blck_info: dict):
+        self.data['emoji'] = blck_info['emoji']
+
+    def create_file_info_block(self, emoji: str):
+        return {
+            "type": "emoji",
+            "id": emoji
+        }
