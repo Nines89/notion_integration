@@ -29,7 +29,7 @@ class NotionRequest:
     def response_handler(self, response: requests.Response):
         if response:
             return response.json()
-        raise ValueError(f"{self.name} failed with: {response}:\n\t\t {response.json()['message']}")
+        raise ValueError(f"{self.name} failed with: {response}: \n\t\t{response.json()['message']}")
 
     def __getitem__(self, key):
         if self.response:

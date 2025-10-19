@@ -10,12 +10,15 @@ class FileError(Exception):
 class BASECLASSS(ABC):
     data = None
 
-    @abstractmethod
-    def get_file_info(self, blck_info: dict):
+    def __init__(self, *args, **kwargs):
         pass
 
     @abstractmethod
-    def create_file_info_block(self, *args, **kwargs):
+    def get_info(self, blck_info: dict):
+        pass
+
+    @abstractmethod
+    def create_info_block(self, *args, **kwargs):
         pass
 
     def __getitem__(self, key):
@@ -37,31 +40,32 @@ class NDate(BASECLASSS):
         self.data: dict[str, str | datetime | None] = {
             "time": None,
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict | str):
+    def get_info(self, blck_info: dict | str):
         self.data['time'] = datetime.fromisoformat(
             blck_info.
             replace("Z", "+00:00")
         )
 
-    def create_file_info_block(self, date: str):
+    def create_info_block(self, date: str):
         return date
 
 
 class NFileTypeFile(BASECLASSS):
-    def __init__(self, block: dict = None):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data: dict[str, datetime | None] = {
             "url": None,
             "expiry_time": None
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict):
+    def get_info(self, blck_info: dict):
         self.data['url'] = blck_info['file']['url']
         self.data['expiry_time'] = NDate(blck_info['file']['expiry_time'])['time']
 
-    def create_file_info_block(self, url: str, expiry_time: str):
+    def create_info_block(self, url: str, expiry_time: str):
         """
         expiry_time: '2025-10-17T09:37:00.000Z'
         """
@@ -75,16 +79,17 @@ class NFileTypeFile(BASECLASSS):
 
 
 class NFileTypeUpload(BASECLASSS):
-    def __init__(self, block: dict = None):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data: dict[str, datetime | None] = {
             "id": None,
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict):
+    def get_info(self, blck_info: dict):
         self.data['id'] = blck_info['file_upload']['id']
 
-    def create_file_info_block(self, file_id: str):
+    def create_info_block(self, file_id: str):
         return {
               "type": "file_upload",
               "file_upload": {
@@ -94,16 +99,17 @@ class NFileTypeUpload(BASECLASSS):
 
 
 class NFileTypeExternal(BASECLASSS):
-    def __init__(self, block: dict = None):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data: dict[str, datetime | None] = {
             "url": None,
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict):
+    def get_info(self, blck_info: dict):
         self.data['url'] = blck_info['external']['url']
 
-    def create_file_info_block(self, url):
+    def create_info_block(self, url):
         return {
               "type": "external",
               "external": {
@@ -139,18 +145,19 @@ def n_icon(_obj: dict) -> BASECLASSS:
 
 
 class NUser(BASECLASSS):
-    def __init__(self, block: dict = None):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if block['object'] != 'user':
             raise ValueError("Block object must be 'user', you're using the wrong class")
         self.data: dict[str, datetime | None] = {
             "id": None,
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict):
+    def get_info(self, blck_info: dict):
         self.data['id'] = blck_info['id']
 
-    def create_file_info_block(self, _id: str):
+    def create_info_block(self, _id: str):
         return {
             "object": "user",
             "id": _id
@@ -158,16 +165,17 @@ class NUser(BASECLASSS):
 
 
 class NEmoji(BASECLASSS):
-    def __init__(self, block: dict = None):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data: dict[str, datetime | None] = {
             "emoji": None,
         }
-        self.get_file_info(block)
+        self.get_info(block)
 
-    def get_file_info(self, blck_info: dict):
+    def get_info(self, blck_info: dict):
         self.data['emoji'] = blck_info['emoji']
 
-    def create_file_info_block(self, emoji: str):
+    def create_info_block(self, emoji: str):
         return {
             "type": "emoji",
             "id": emoji

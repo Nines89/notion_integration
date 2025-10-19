@@ -10,79 +10,46 @@ from lib.notion_types import (
 from lib.notion_client import NGET, NotionApiClient
 
 
-class NotionError(Exception):
+class PageError(Exception):
     pass
 
 
 class NotionPageGet(NotionBlockGet):
-    page_info = None
+    block_type = 'page'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.api_url = f"https://api.notion.com/v1/pages/{self.token}"  # noqa
-        self.get_page_content()
+        self.get_block_content()
 
-    def get_page_content(self):
-        self.page_info = self.get_page_info()
-        if 'page' != self.is_page:
-            raise NotionError("Page Class are being used for a not page object")
+    def get_block_content(self):
+        super(NotionPageGet, self).get_block_content()
+        if 'page' != self.is_block:
+            raise PageError("Page Class are being used for a not page object")
         # self.page_properties = self.get_page_properties()
         # self.page_children = self.get_page_children()
 
-    def get_page_info(self):
-        return NGET(self.api_url, self.headers)
-
-    @property
-    def is_page(self):
-        return self.page_info['object']
-
-    @property
-    def is_archived(self):
-        return self.page_info['archived']
-
-    @property
-    def is_trash(self):
-        return self.page_info['in_trash']
-
-    @property
-    def is_locked(self):
-        return self.page_info['is_locked']
-
-    @property
-    def retrieve_id(self):
-        return self.page_info['id']
-
     @property
     def retrieve_cover(self):
-        return n_file(self.page_info['cover'])
-
-    @property
-    def creation_info(self):
-        return {'user': NUser(self.page_info['created_by'])['id'],
-                'create_time': NDate(self.page_info['created_time'])['time']}
-
-    @property
-    def last_edit_info(self):
-        return {'user': NUser(self.page_info['last_edited_by'])['id'],
-                'create_time': NDate(self.page_info['last_edited_time'])['time']}
+        return n_file(self.info['cover'])
 
     @property
     def retrieve_icon(self):
-        return n_icon(self.page_info['icon'])
+        return n_icon(self.info['icon'])
 
     @property
     def retrieve_url(self):
-        return self.page_info['url']
+        return self.info['url']
 
     @property
     def retrieve_pubblic_url(self):
-        if not self.page_info['public_url']:
+        if not self.info['public_url']:
             return 'Page is not pubblished'
-        return self.page_info['public_url']
+        return self.info['public_url']
 
     def retrieve_all_info(self, stamp: bool = False):
         output_dict = {
-            'is_page': self.is_page,
+            'is_page': self.is_block,
             'is_archived': self.is_archived,
             'is_trash': self.is_trash,
             'is_locked': self.is_locked,
