@@ -1,11 +1,25 @@
 import requests
 
+
 class ResponseError(Exception):
     pass
+
+
+class NotionApiClient:
+    def __init__(self, key, version: str = "2025-09-03"):
+        self.key = key
+        self.headers = {
+            "Authorization": "Bearer " + self.key,
+            "Content-Type": "application/json",
+            "Notion-Version": version,
+            "accept": "application/json",
+        }
+
 
 class NotionRequest:
     name = "Request"
     response = None
+
     def __init__(self, url: str, header: dict = None):
         if not header:
             raise ValueError("Header info must be provided")

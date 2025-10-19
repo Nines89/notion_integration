@@ -19,6 +19,7 @@ sempre in riferimento alla documentazione ufficiale
                        query all columns            
 """
 
+
 def id_by_link(url: str):
     pattern = re.compile(r"notion\.so/[^/\?]*-([0-9a-f]{32})") # type: ignore
     match = pattern.search(url)
@@ -50,7 +51,6 @@ class NotionIntegration:
             "Notion-Version": "2022-06-28",
             "accept": "application/json",
         }
-
 
 
 class NotionPage(NotionIntegration):
