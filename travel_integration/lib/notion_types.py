@@ -36,7 +36,8 @@ class BASECLASSS(ABC):
 
 
 class NDate(BASECLASSS):
-    def __init__(self, block: dict | str = None):
+    def __init__(self, block: dict | str = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.data: dict[str, str | datetime | None] = {
             "time": None,
         }
@@ -180,3 +181,29 @@ class NEmoji(BASECLASSS):
             "type": "emoji",
             "id": emoji
         }
+
+
+class NRichTextList:
+    pass
+
+
+
+class NRichTextElement(BASECLASSS):
+    def __init__(self, block: dict = None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data: dict[str, datetime | None] = {
+            "type": None, # text, mention or equation
+            "annotations": {    },
+            "plain_text": "",
+            "href": "",
+        }
+        self.get_info(block)
+
+    def get_info(self, blck_info: dict):
+        self.data['emoji'] = blck_info['emoji']
+
+    def create_info_block(self, emoji: str):
+        return {
+            "type": "emoji",
+            "id": emoji
+            }

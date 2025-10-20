@@ -1,8 +1,8 @@
 import re
 from typing import Any
 
-from lib.notion_client import NotionApiClient, NGET
-from lib.notion_types import (
+from notion_client import NotionApiClient, NGET
+from notion_types import (
     NUser, NDate, BASECLASSS
 )
 
@@ -109,6 +109,26 @@ class Divider(NotionBlock, BASECLASSS):
                 }
 
 
+class Paragraph(NotionBlock, BASECLASSS):
+    block_type = 'paragraph'
+
+    def __init__(self, block: dict | str = None, *args, **kwargs):
+        self.data: dict[str, Any] = {
+            "divider": None,
+        }
+        super().__init__(*args, **kwargs)
+        self.get_info(block)
+
+    def get_info(self, blck_info: dict):
+        self.data['divider'] = blck_info['divider']
+
+    def create_info_block(self):
+        return {
+            "type": "divider",
+            "divider": {}
+        }
+
+
 BLOCK_CLASS_MAP = {
     # "bookmark": BookmarkBlock,
     # "breadcrumb": BreadcrumbBlock,
@@ -128,7 +148,7 @@ BLOCK_CLASS_MAP = {
     # "image": ImageBlock,
     # "link_preview": LinkPreviewBlock,
     # "numbered_list_item": NumberedListItemBlock,
-    # "paragraph": ParagraphBlock,
+    "paragraph": Paragraph,
     # "pdf": PdfBlock,
     # "quote": QuoteBlock,
     # "synced_block": SyncedBlock,

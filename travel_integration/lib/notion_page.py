@@ -1,13 +1,13 @@
 import re
 from pprint import pprint
 
-from lib.notion_block import NotionBlockGet
-from lib.notion_types import (
+from notion_block import NotionBlockGet
+from notion_types import (
     n_file, n_icon,
     NUser, NDate
 )
 
-from lib.notion_client import NGET, NotionApiClient
+from notion_client import NGET, NotionApiClient
 
 
 class PageError(Exception):
