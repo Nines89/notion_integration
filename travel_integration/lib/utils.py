@@ -21,3 +21,8 @@ class Color(Enum):
     RED = "red"
     RED_BACKGROUND = "red_background"
     YELLOW_BACKGROUND = "yellow_background"
+
+
+class BotType(Enum):
+    USER = "user"
+    WORKSPACE = "workspace"
