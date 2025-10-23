@@ -10,6 +10,15 @@ class UserError(Exception):
     pass
 
 
+def load_user(header: dict, block_id: str):
+    block = NUser(header, block_id)
+    block.get_content()
+    if block.data['type'] == "person":
+        return NPerson(header, block_id)
+    elif block.data['type'] == "bot":
+        return NBot(header, block_id)
+    return block
+
 
 class NUser(NObj):
     """
@@ -17,23 +26,6 @@ class NUser(NObj):
     Block_id contiene la stringa con l' id, serve per il patch, il delete e il get
     """
     obj_type = "user"
-
-    def __new__(cls, header: dict, block_id: str = None):
-        # crea un'istanza temporanea solo per leggere il tipo
-        if block_id:
-            temp = super().__new__(cls)
-            temp.block_id = block_id.replace('-', '')
-            temp.header = header
-            temp.get_url = f"https://api.notion.com/v1/users/{block_id}"
-            temp.get_content()
-
-            obj_type = temp.data["type"]
-            if obj_type == "person" and cls is NUser:
-                return super().__new__(NPerson)
-            if obj_type == "bot" and cls is NUser:
-                return super().__new__(NBot)
-            return temp
-        return super().__new__(cls)
 
     def __init__(self, header: dict, block_id: str = None):
         if block_id:
@@ -53,7 +45,7 @@ class NUser(NObj):
             self.request_id = self.data['request_id']
 
     def get_bot_user(self):
-        self.data = NUser(self.header,
+        self.data = load_user(self.header,
                           self._get(
                               api_url=self.get_bot_user_url,
                               headers=self.header
@@ -85,7 +77,7 @@ class NBot(NUser):
 if __name__ == '__main__':
     api = NotionApiClient(key="secret_dmenkOROoW68ilWcGvmBS7PF49k5J1dAQbOx3KPhpz0")
     blockId = "8711f079-8ae4-4748-89a7-d2daf31ff8fe"
-    user = NUser(header=api.headers) #, block_id=blockId)
+    user = load_user(header=api.headers, block_id=blockId)
     user.get_bot_user()
     print(user.data.workspace_name) # noqa
     pass

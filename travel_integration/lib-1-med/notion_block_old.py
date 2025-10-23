@@ -1,9 +1,9 @@
 import re
 from typing import Any
 
-from travel_integration.lib.notion_client import NotionApiClient, NGET
+from notion_client import NotionApiClient, NGET
 from notion_types_old import (
-    NUser, NDate, BASECLASSS
+    load_user, NDate, BASECLASSS
 )
 
 
