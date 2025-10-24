@@ -14,6 +14,7 @@ class Ntype(ABC):
     def to_dict(self):
         return self.data
 
+
 class NDate(Ntype):
     def __init__(self, data: str | datetime): # noqa
         if isinstance(data, str):
@@ -47,7 +48,21 @@ class NText(Ntype):
         return f"Content: {self.content}\nLink: {self.link}"
 
 
-class NEquation(Ntype):
+class NIcon(Ntype):
+    """
+    "icon": {
+       "emoji": "⭐"
+     },
+    """
+    @property
+    def emoji(self):
+        return self.data['emoji']
+
+    def __repr__(self):
+        return f"Emoji: {self.emoji}\n"
+
+
+class NTypeEquation(Ntype):
     """
         "equation": {
         "expression": "E = mc^2"
@@ -113,7 +128,7 @@ class NRichText(Ntype):
                 if key == 'text':
                     self.data[key] = NText(item)
                 elif key == 'equation':
-                    self.data[key] = NEquation(item)
+                    self.data[key] = NTypeEquation(item)
                 elif key == 'mention':
                     self.data[key] = NMention(item)
         if self.data.keys() != self.basic_schema.keys():

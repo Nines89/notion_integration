@@ -34,13 +34,14 @@ class NObj(ABC):
 
     def get_content(self):
         self.data = self._get(api_url=self.get_url, headers=self.header) # noqa
-        for a in self.__dict__:
+        for a in list(self.__dict__.keys()):
             if a.startswith('_'):
                 getattr(self, a[1:])
 
     def update_content(self, data: dict):
         self.data = self._update(api_url=self.update_url, data=data) # noqa
 
+    ## =============================== CHILDREN BLOCK ==================================================================
     def get_children(self):
         if self.has_children:
             self.children_data = self._get(api_url=self.get_children_url, headers=self.header) # noqa
@@ -52,6 +53,7 @@ class NObj(ABC):
         if "children_data" not in self.__dict__.keys():
             self.get_children()
         return self.children_data
+    ## =====================================================================================================================
 
     @property
     def object_type(self):
