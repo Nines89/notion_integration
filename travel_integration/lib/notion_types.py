@@ -76,7 +76,7 @@ class NTypeEquation(Ntype):
         return f"Equation: {self.equation}\n"
 
 
-class NMention(Ntype):
+class NMentionType(Ntype):
     #TODO: add mentions type
     @property
     def type(self):
@@ -130,7 +130,7 @@ class NRichText(Ntype):
                 elif key == 'equation':
                     self.data[key] = NTypeEquation(item)
                 elif key == 'mention':
-                    self.data[key] = NMention(item)
+                    self.data[key] = NMentionType(item)
         if self.data.keys() != self.basic_schema.keys():
             raise SchemaError(f"Received Keys are not the expected: {self.basic_schema.keys()}")
 

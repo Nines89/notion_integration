@@ -101,3 +101,15 @@ class Language(Enum):
     XML = "xml"
     YAML = "yaml"
     JAVA_C_CPP_CSHARP = "java/c/c++/c#"
+
+
+class ImageExtension(Enum):
+    BMP = ".bmp"
+    GIF = ".gif"
+    HEIC = ".heic"
+    JPEG = ".jpeg"
+    JPG = ".jpg"
+    PNG = ".png"
+    SVG = ".svg"
+    TIF = ".tif"
+    TIFF = ".tiff"

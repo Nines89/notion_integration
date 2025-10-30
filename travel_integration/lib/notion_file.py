@@ -2,7 +2,10 @@ from notion_types import Ntype
 
 
 def n_file(_obj: dict, **kwargs) -> Ntype:
-    type_of_object = _obj['type']
+    try:
+        type_of_object = _obj['type'] if 'type' in _obj else kwargs['type']
+    except KeyError:
+        raise KeyError("Type of file must be defined!")
     mapping = {
         "file": NFileTypeFile,
         "file_upload": NFileTypeUpload,
@@ -80,7 +83,7 @@ class NFileTypeExternal(Ntype):
 
     @property
     def url(self):
-        return self.data['id']
+        return self.data['url']
 
     def __repr__(self):
         return f"Url: {self.url}\n"

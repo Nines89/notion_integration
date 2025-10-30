@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 
+
 from notion_types import NDate
 from notion_client import (
     NDEL, NGET, NPATCH, NPOST
 )
-
-from utils import Color
 
 class ObjectError(Exception):
     pass
@@ -41,10 +40,22 @@ class NObj(ABC):
     def update_content(self, data: dict):
         self.data = self._update(api_url=self.update_url, data=data) # noqa
 
+    def append_contents(self, data: list[dict]):
+        self.data = self._update(api_url=self.append_children_url, data=data) # noqa
+
+    def delete_content(self):
+        self._delete(api_url=self.delete_url) # noqa
+
     ## =============================== CHILDREN BLOCK ==================================================================
     def get_children(self):
+        from notion_block import load_block
         if self.has_children:
-            self.children_data = self._get(api_url=self.get_children_url, headers=self.header) # noqa
+            self.children_data = []
+            children_data = self._get(api_url=self.get_children_url, headers=self.header) # noqa
+            for child in children_data.data['results']:
+                self.children_data.append(load_block(self.header, child['id']))
+            for child in self.children_data:
+                child.get_content()
         else:
             self.children_data = None # noqa
 
@@ -108,7 +119,8 @@ class NObj(ABC):
                 'create_user': load_user(self.header, self.data['last_edited_by']['id'])}
 
     def __repr__(self):
-        return self.data.__repr__()
+        return (f"\n-------- {self.__class__.__name__} properties -------------"
+                f"\n{self.data.__repr__()}---------------------\n")
 
     def __getitem__(self, item):
         return self.data.__getitem__(item)
@@ -155,7 +167,7 @@ class _NObjGet(_NObjReq):
 
 class _NObjPost(_NObjReq):
     def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(header, url, *args, **kwargs)
 
     def create_obj(self):
         """To Implement"""
@@ -173,7 +185,7 @@ class _NObjPatch(_NObjReq):
 
 class _NObjDel(_NObjReq):
     def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(header, url, *args, **kwargs)
 
     def delete_obj(self, *args, **kwargs):
         """To Implement"""
