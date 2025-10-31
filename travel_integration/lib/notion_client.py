@@ -51,7 +51,10 @@ class NotionRequest:
         raise ResponseError(f"The request response doesn't exists")
 
     def __repr__(self):
-        return self.response
+        out = ""
+        for key, item in self.response.items():
+            out += f"{key}: {item}\n"
+        return out
 
 
 class NGET(NotionRequest):

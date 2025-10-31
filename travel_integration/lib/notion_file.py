@@ -18,6 +18,44 @@ def n_file(_obj: dict, **kwargs) -> Ntype:
         raise TypeError("Unknown object type")
 
 
+def n_icon(_obj: dict) -> Ntype:
+    type_of_object = _obj['type']
+    mapping = {
+        "external": n_file,
+        "file_upload": n_file,
+        "emoji": NEmoji,
+    }
+    try:
+        return mapping[type_of_object](_obj)
+    except KeyError:
+        raise TypeError("Unknown object type")
+
+
+class NEmoji(Ntype):
+    def __init__(self, _obj: dict, **kwargs) -> None:
+        if kwargs:
+            if ('url' or 'expiry_time') not in kwargs.keys():
+                raise TypeError("You must specify just: 'url' and 'expiry_time'")
+            data = {
+                'type': 'emoji',
+                'emoji': kwargs['emoji']
+            }
+            super().__init__(data)
+        else:
+            super().__init__(_obj)
+
+    @property
+    def emoji(self):
+        return self.data['emoji']
+
+    @emoji.setter
+    def emoji(self, value: str):
+        self.data['emoji'] = value
+
+    def __repr__(self):
+        return f"Emoji: \n\t{self.emoji}\n"
+
+
 class NFileTypeFile(Ntype):
     def __init__(self, _obj: dict, **kwargs) -> None:
         if kwargs:
@@ -42,7 +80,7 @@ class NFileTypeFile(Ntype):
         return self.data['file']['expiry_time']
 
     def __repr__(self):
-        return f"ExpiryTime: {self.expiry_time}\nLink: {self.url}"
+        return f"Type: File:\n\tExpiryTime: {self.expiry_time}\n\tLink: {self.url}"
 
 
 class NFileTypeUpload(Ntype):
@@ -64,7 +102,7 @@ class NFileTypeUpload(Ntype):
         return self.data['id']
 
     def __repr__(self):
-        return f"ID: {self._id}\n"
+        return f"Type: Upload:\n\tID: {self._id}\n"
 
 
 class NFileTypeExternal(Ntype):
@@ -83,10 +121,10 @@ class NFileTypeExternal(Ntype):
 
     @property
     def url(self):
-        return self.data['url']
+        return self.data['external']['url']
 
     def __repr__(self):
-        return f"Url: {self.url}\n"
+        return f"Type: External:\n\tUrl: {self.url}\n"
 
 
 if __name__ == "__main__":

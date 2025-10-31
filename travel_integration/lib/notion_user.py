@@ -48,7 +48,6 @@ class NUser(NObj):
         self.data = load_user(self.header,
                           self._get(
                               api_url=self.get_bot_user_url,
-                              headers=self.header
                             )['id']
                           )
 

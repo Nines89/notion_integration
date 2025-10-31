@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 from notion_types import NDate
@@ -19,20 +19,20 @@ class NObj(ABC):
     def __init__(self, header: dict):
         self.header = header
 
-    def _get(self, api_url: str, *args, **kwargs):
-        return _NObjGet(self.header, api_url, *args, **kwargs)
+    def _get(self, api_url: str):
+        return NGET(api_url, self.header)
 
-    def _create(self, api_url: str, *args, **kwargs):
-        return _NObjPost(self.header, api_url, *args, **kwargs)
+    def _create(self, api_url: str, data: dict):
+        return NPOST(header=self.header, url=api_url, data=data)
 
-    def _update(self, api_url: str, *args, **kwargs):
-        return _NObjPatch(self.header, api_url, *args, **kwargs)
+    def _update(self, api_url: str, data: dict):
+        return NPATCH(header=self.header, url=api_url, data=data)
 
-    def _delete(self, api_url: str, *args, **kwargs):
-        return _NObjDel(self.header, api_url, *args, **kwargs)
+    def _delete(self, api_url: str):
+        return NDEL(header=self.header, url=api_url)
 
     def get_content(self):
-        self.data = self._get(api_url=self.get_url, headers=self.header) # noqa
+        self.data = self._get(api_url=self.get_url) # noqa
         for a in list(self.__dict__.keys()):
             if a.startswith('_'):
                 getattr(self, a[1:])
@@ -47,17 +47,23 @@ class NObj(ABC):
         self._delete(api_url=self.delete_url) # noqa
 
     ## =============================== CHILDREN BLOCK ==================================================================
-    def get_children(self):
+    def _get_children(self):
         from notion_block import load_block
-        if self.has_children:
-            self.children_data = []
-            children_data = self._get(api_url=self.get_children_url, headers=self.header) # noqa
-            for child in children_data.data['results']:
-                self.children_data.append(load_block(self.header, child['id']))
-            for child in self.children_data:
-                child.get_content()
-        else:
-            self.children_data = None # noqa
+        self.children_data = []
+        children_data = self._get(api_url=self.get_children_url)  # noqa
+        for child in children_data.response['results']:
+            print("Create block for: ", child['type'])
+            self.children_data.append(load_block(self.header, child['id'], child['type']))
+            self.children_data[-1].get_content()
+
+    def get_children(self):
+        if self.object_type == "block":
+            if self.has_children:
+                self._get_children()
+            else:
+                self.children_data = None # noqa
+        elif self.object_type == "page":
+            self._get_children()
 
     @property
     def children(self):
@@ -67,131 +73,64 @@ class NObj(ABC):
     ## =====================================================================================================================
 
     @property
+    def parent(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        return self.data['parent']['type'], self.data['parent'][self.data['parent']['type']]
+
+    @property
     def object_type(self):
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return self.data['object']
 
     @property
-    def object_id(self):
-        if self.data is None:
+    def _id(self):
+        if not hasattr(self, "data"):
             self.get_content()
         return self.data['id']
 
     @property
     def has_children(self):
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return self.data['has_children']
 
     @property
     def is_archived(self):
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return self.data['archived']
 
     @property
     def in_trash(self):
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return self.data['in_trash']
 
     @property
-    def object_parent(self):
-        if self.data is None:
-            self.get_content()
-        return self.data['parent'] # TODO
-
-    @property
-    def object_create_info(self):
+    def create_info(self):
         from notion_user import load_user
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return {'create_time': NDate(self.data['created_time']),
                 'create_user': load_user(self.header, self.data['created_by']['id'])}
 
     @property
-    def object_last_edit_info(self):
+    def last_edit_info(self):
         from notion_user import load_user
-        if self.data is None:
+        if not hasattr(self, "data"):
             self.get_content()
         return {'last_edited_time': NDate(self.data['created_time']),
                 'create_user': load_user(self.header, self.data['last_edited_by']['id'])}
 
     def __repr__(self):
+        if not hasattr(self, "data"):
+            self.get_content()
         return (f"\n-------- {self.__class__.__name__} properties -------------"
                 f"\n{self.data.__repr__()}---------------------\n")
 
     def __getitem__(self, item):
         return self.data.__getitem__(item)
-
-
-class _NObjReq(ABC):
-    """
-    Questa classe è l' astrazione per le classi che implementano le richieste
-    """
-    data = None
-
-    def __init__(self, header: dict, url: str, *args, **kwargs):
-        self.header = header
-        self.url = url
-
-    def __getitem__(self, key):
-        if self.data:
-            if key in self.data:
-                return self.data[key]
-            raise ObjectError(f"The key {key} does not exist")
-        raise ObjectError(f"Please get file info first.")
-
-    def __str__(self):
-        out = ""
-        for key, item in self.data.items():
-            out += f"{key}: {item}\n"
-        return out
-
-    def __repr__(self):
-        out = ""
-        for key, item in self.data.items():
-            out += f"{key}: {item}\n"
-        return out
-
-
-class _NObjGet(_NObjReq):
-    def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(header, url, *args, **kwargs)
-        self.data = self.get_obj().response
-
-    def get_obj(self):
-        return NGET(self.url, self.header)
-
-
-class _NObjPost(_NObjReq):
-    def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(header, url, *args, **kwargs)
-
-    def create_obj(self):
-        """To Implement"""
-        pass
-
-
-class _NObjPatch(_NObjReq):
-    def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(header, url, *args, **kwargs)
-        self.data = self.update_obj(*args, **kwargs).response
-
-    def update_obj(self, *args, **kwargs):
-        return NPATCH(self.url, self.header, *args, **kwargs)
-
-
-class _NObjDel(_NObjReq):
-    def __init__(self, header: dict, url: str, *args, **kwargs):
-        super().__init__(header, url, *args, **kwargs)
-
-    def delete_obj(self, *args, **kwargs):
-        """To Implement"""
-        pass
-
-
-
 
 

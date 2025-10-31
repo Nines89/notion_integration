@@ -34,14 +34,19 @@ class NText(Ntype):
     "link": null
     },
     """
+    def __init__(self, data: dict):
+        super().__init__(data)
+        if "text" in data.keys():
+            self.data = self.data["text"]
+
     @property
     def content(self):
-        return self.data['content']
+        return self.data['text']['content']
 
     @property
     def link(self):
-        if self.data['link']:
-            return self.data['link']['url']
+        if self.data['text']['link']:
+            return self.data['text']['link']['url']
         return None
 
     def __repr__(self):
@@ -167,9 +172,58 @@ class NRichList(list):
             raise ValueError(f"{item} is not a NRichText, but {type(item)}")
         super().append(item)
 
+    def to_dict(self):
+        rt = []
+        try:
+            for r in self:
+                rd = r.to_dict()
+                for j, item in rd.items():
+                    if isinstance(item, Ntype):
+                        rd[j] = item.to_dict()
+                if rd['annotations'] is None:
+                    rd['annotations'] = {
+                            "bold": False,
+                            "italic": False,
+                            "strikethrough": False,
+                            "underline": False,
+                            "code": False,
+                            "color": "default"
+                          }
+                rt.append(rd)
+        except TypeError as e:
+            raise  TypeError(f"Error: {e}, rich could be empty, try to call self.get_rich_text or use rich_text setter!")
+        return rt
 
-def rich_list_text(array: NRichList):
-    return ''.join([element.plain_text for element in array])
+    @property
+    def text(self):
+        return ''.join([element.plain_text for element in self])
+
+
+def simple_rich_text_list(content: str, t_type: str = 'text'):
+    if t_type == 'text':
+        item = NText({'text': {"content": content, 'link': None}})
+    elif t_type == 'equation':
+        item = NTypeEquation({"expression": content})
+    else:
+        raise ValueError(f"{t_type} is not supported - text or equation")
+    rich_json = {
+      "type": t_type,
+      t_type: item.to_dict(),
+      "annotations": {
+        "bold": False,
+        "italic": False,
+        "strikethrough": False,
+        "underline": False,
+        "code": False,
+        "color": "default"
+      },
+      "plain_text": content,
+      "href": None
+    }
+    ret = NRichList()
+    ret.append(NRichText(rich_json))
+    return ret
+
 
 
 if __name__ == '__main__':
@@ -182,6 +236,9 @@ if __name__ == '__main__':
         {'type': 'text', 'text': {'content': 'dentro', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': 'dentro', 'href': None}]
     for el in list_of_rich:
         l.append(NRichText(el))
-    print(rich_list_text(l))
-    print(l)
+    print(l.text)
+    print(l.to_dict())
+
+
+
     pass

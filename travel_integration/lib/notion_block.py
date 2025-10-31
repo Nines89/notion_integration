@@ -12,74 +12,49 @@ class LanguageCodeError(Exception):
     pass
 
 
-# creiamo una factory
-def load_block(header: dict, block_id: str):
-    """
-    Trova automaticamente il tipo di blocco con cui si sta lavorando
-    """
-    block = NBlock(header, block_id)
-    block.get_content()
-    if block.block_type == "paragraph":
-        return NParagraph(header, block_id)
-    elif block.block_type == "divider":
-        return NDivider(header, block_id)
-    elif block.block_type == "bulleted_list_item":
-        return NBulletListItem(header, block_id)
-    elif block.block_type == "bookmark":
-        return NBookmark(header, block_id)
-    elif block.block_type == "breadcrumb":
-        return NBreadcrumb(header, block_id)
-    elif block.block_type == "callout":
-        return NCallout(header, block_id)
-    elif block.block_type == "child_database":
-        return NChildDatabase(header, block_id)
-    elif block.block_type == "child_page":
-        return NChildPage(header, block_id)
-    elif block.block_type == "code":
-        return NCode(header, block_id)
-    elif block.block_type == "column_list":
-        return NColumnList(header, block_id)
-    elif block.block_type == "column":
-        return NColumn(header, block_id)
-    elif block.block_type == "embed":
-        return NEmbed(header, block_id)
-    elif block.block_type == "equation":
-        return NEquation(header, block_id)
-    elif block.block_type == "file":
-        return NFile(header, block_id)
-    elif block.block_type == "external":
-        return NFile(header, block_id)
-    elif block.block_type == "file_upload":
-        return NFile(header, block_id)
-    elif block.block_type == "heading_1":
-        return NHeading1(header, block_id)
-    elif block.block_type == "heading_2":
-        return NHeading2(header, block_id)
-    elif block.block_type == "heading_3":
-        return NHeading3(header, block_id)
-    elif block.block_type == "image":
-        return NImage(header, block_id)
-    elif block.block_type == "numbered_list_item":
-        return NNumberedListItem(header, block_id)
-    elif block.block_type == "pdf":
-        return NPdf(header, block_id)
-    elif block.block_type == "quote":
-        return NQuote(header, block_id)
-    elif block.block_type == "synced_block":
-        return NSyncedBlock(header, block_id)
-    elif block.block_type == "table":
-        return NTable(header, block_id)
-    elif block.block_type == "table_row":
-        return NTableRow(header, block_id)
-    elif block.block_type == "table_of_contents":
-        return NTableOfContent(header, block_id)
-    elif block.block_type == "to_do":
-        return NToDo(header, block_id)
-    elif block.block_type == "toggle":
-        return NToggle(header, block_id)
-    # aggiungi altri tipi se servono
+def load_block(header: dict, block_id: str, block_tipe: str = None):
+    BLOCK_TYPES = {
+        "paragraph": NParagraph,
+        "divider": NDivider,
+        "bulleted_list_item": NBulletListItem,
+        "bookmark": NBookmark,
+        "breadcrumb": NBreadcrumb,
+        "callout": NCallout,
+        "child_database": NChildDatabase,
+        "child_page": NChildPage,
+        "code": NCode,
+        "column_list": NColumnList,
+        "column": NColumn,
+        "embed": NEmbed,
+        "equation": NEquation,
+        "file": NFile,
+        "external": NFile,
+        "file_upload": NFile,
+        "heading_1": NHeading1,
+        "heading_2": NHeading2,
+        "heading_3": NHeading3,
+        "image": NImage,
+        "numbered_list_item": NNumberedListItem,
+        "pdf": NPdf,
+        "quote": NQuote,
+        "synced_block": NSyncedBlock,
+        "table": NTable,
+        "table_row": NTableRow,
+        "table_of_contents": NTableOfContent,
+        "to_do": NToDo,
+        "toggle": NToggle,
+        # aggiungi altri tipi se servono
+    }
+    if not block_tipe:
+        block = NBlock(header, block_id)
+        block.get_content()
+        bl = block.block_type
     else:
-        raise TypeError(f"Unsupported block type: {block.block_type}")
+        bl = block_tipe
+    cls = BLOCK_TYPES.get(bl)
+    if cls:
+        return cls(header, block_id)
+    raise TypeError(f"Unsupported block type: {bl}")
 
 
 class NBlock(NObj):
@@ -186,31 +161,32 @@ class NBlock(NObj):
     def text(self):
         if not self._rich_text:
             self._get_rich_text()
-        return rich_list_text(self._rich_text)
+        return self._rich_text.text
 
-    def _get_rich_text_dict(self, att = None):
+    def _get_rich_text_dict(self, att: NRichList = None):
         if att is None:
             att = self._rich_text
-        rt = []
-        try:
-            for r in att:
-                rd = r.to_dict()
-                for j, item in rd.items():
-                    if isinstance(item, Ntype):
-                        rd[j] = item.to_dict()
-                if rd['annotations'] is None:
-                    rd['annotations'] = {
-                            "bold": False,
-                            "italic": False,
-                            "strikethrough": False,
-                            "underline": False,
-                            "code": False,
-                            "color": "default"
-                          }
-                rt.append(rd)
-        except TypeError as e:
-            raise  TypeError(f"Error: {e}, rich could be empty, try to call self.get_rich_text or use rich_text setter!")
-        return rt
+        return att.to_dict()
+        # rt = []
+        # try:
+        #     for r in att:
+        #         rd = r.to_dict()
+        #         for j, item in rd.items():
+        #             if isinstance(item, Ntype):
+        #                 rd[j] = item.to_dict()
+        #         if rd['annotations'] is None:
+        #             rd['annotations'] = {
+        #                     "bold": False,
+        #                     "italic": False,
+        #                     "strikethrough": False,
+        #                     "underline": False,
+        #                     "code": False,
+        #                     "color": "default"
+        #                   }
+        #         rt.append(rd)
+        # except TypeError as e:
+        #     raise  TypeError(f"Error: {e}, rich could be empty, try to call self.get_rich_text or use rich_text setter!")
+        # return rt
     ## =================================================================================================================
 
 
@@ -236,95 +212,6 @@ Blocchi specifici:
         pprint(block._get_spec_dict())
         print('----------------------------------------------')
 """
-
-
-class NDivider(NBlock):
-    block_type = "divider"
-    def _get_spec_dict(self): # noqa
-        return {
-            'type': 'divider',
-            'divider': {}
-        }
-
-
-class NColumnList(NBlock):
-    block_type = "column_list"
-    def _get_spec_dict(self): # noqa
-        return {
-            'type': 'column_list',
-            'column_list': {}
-        }
-
-
-class NColumn(NBlock):
-    block_type = "column"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._width_ratio -> column section
-        """
-        super().__init__(header, block_id)
-        self._width_ratio = None
-
-    @property
-    def width_ratio(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._width_ratio = self.data[self.block_type]['width_ratio']
-        return self._width_ratio
-
-    @width_ratio.setter
-    def width_ratio(self, value: float):
-        self._width_ratio = value
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "width_ratio": self._width_ratio
-        }
-        return {
-            'type': 'column',
-            'column': par_dict
-        }
-
-
-class NEquation(NBlock):
-    block_type = "equation"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._expression -> equation expression
-        """
-        super().__init__(header, block_id)
-        self._expression = None
-
-    @property
-    def expression(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._expression = self.data[self.block_type]['expression']
-        return self._expression
-
-    @expression.setter
-    def expression(self, value: str):
-        self._expression = value
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "expression": self._expression
-        }
-        return {
-            'type': 'equation',
-            'equation': par_dict
-        }
-
-
-class NBreadcrumb(NBlock):
-    block_type = "breadcrumb"
-    def _get_spec_dict(self): # noqa
-        return {
-            'type': 'breadcrumb',
-            'breadcrumb': {}
-        }
 
 
 class NBookmark(NBlock):
@@ -377,44 +264,235 @@ class NBookmark(NBlock):
         }
 
 
-class NSyncedBlock(NBlock):
-    block_type = "synced_block"
-
-    def __init__(self, header: dict, block_id: str):
-        super().__init__(header, block_id)
-        self._synced_from = None
-        self._sync_parent_id = None
-
-    @property
-    def synced_from(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._synced_from = self.data[self.block_type]['synced_from']
-        return self._synced_from
-
-    @synced_from.setter
-    def synced_from(self, value: str):
-        self._synced_from = {
-            "block_id": value
+class NBreadcrumb(NBlock):
+    block_type = "breadcrumb"
+    def _get_spec_dict(self): # noqa
+        return {
+            'type': 'breadcrumb',
+            'breadcrumb': {}
         }
 
+
+class NCallout(NBlock):
+    block_type = "callout"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._rich_text -> list of richeText Objects
+        self._icon -> callout icon -> NIcon(Ntype)
+        self._color -> callout color -> Color
+        """
+        super().__init__(header, block_id)
+        self._icon = None
+        self._color = None
+        self._rich_text = None
+
     @property
-    def sync_parent_id(self):
+    def icon(self):
         if not hasattr(self, "data"):
             self.get_content()
-        if not self.synced_from:
-            return None
-        return self.data[self.block_type]['synced_from']['block_id']
+        self._icon = NIcon(self.data[self.block_type]['icon'])
+        return self._icon
+
+    @icon.setter
+    def icon(self, value: NIcon):
+        self._icon = value
+
+    @property
+    def color(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        if self.data[self.block_type]['color'] not in Color:
+            raise ObjectError("The color of the paragraph is not allowed.")
+        self._color = self.data[self.block_type]['color']
+        return self._color
+
+    @color.setter
+    def color(self, value: Color | str):
+        if not isinstance(value, Color):
+            if value in Color:
+                self._color = value
+        else:
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
-            "synced_from": self.synced_from,
+                "rich_text": self._get_rich_text_dict(),
+                "icon": self._icon.to_dict(),
+                "color": self._color,
+            }
+        return {
+            'type': 'callout',
+            'callout': par_dict
         }
+
+
+class NCode(NBlock):
+    block_type = "code"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._caption -> list of richeText Objects
+        self._rich_text -> rich_text object
+        self._language -> language string
+        """
+        super().__init__(header, block_id)
+        self._caption = None
+        self._rich_text = None
+        self._language = None
+
+    @property
+    def caption(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        rich_list = NRichList()
+        for rich in self.data[self.block_type]['caption']:
+            rich_list.append(NRichText(rich))
+        self._caption = rich_list
+        return self._caption
+
+    @caption.setter
+    def caption(self, value: NRichList):
+        self._caption = value
+
+    @property
+    def language(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        if self.data[self.block_type]['language'] in Language._value2member_map_:
+            self._language = self.data[self.block_type]['language']
+            return self._language
+        raise LanguageCodeError(f"Language Code {self.data[self.block_type]['language']} not supported.")
+
+    @language.setter
+    def language(self, value: str):
+        if value not in Language._value2member_map_:
+            raise LanguageCodeError(f"Language Code {self.data[self.block_type]['language']} not supported.")
+        self._language = value
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "caption": self._get_rich_text_dict(att=self._caption),
+                "rich_text": self._get_rich_text_dict(),
+                "language": self._language,
+            }
+
+        return {
+            'type': 'code',
+            'code': par_dict
+        }
+
+
+class NColumn(NBlock):
+    block_type = "column"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._width_ratio -> column section
+        """
+        super().__init__(header, block_id)
+        self._width_ratio = None
+
+    @property
+    def width_ratio(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        self._width_ratio = self.data[self.block_type]['width_ratio']
+        return self._width_ratio
+
+    @width_ratio.setter
+    def width_ratio(self, value: float):
+        self._width_ratio = value
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "width_ratio": self._width_ratio
+        }
+        return {
+            'type': 'column',
+            'column': par_dict
+        }
+
+
+class NColumnList(NBlock):
+    block_type = "column_list"
+    def _get_spec_dict(self): # noqa
+        return {
+            'type': 'column_list',
+            'column_list': {}
+        }
+
+
+class NDivider(NBlock):
+    block_type = "divider"
+    def _get_spec_dict(self): # noqa
+        return {
+            'type': 'divider',
+            'divider': {}
+        }
+
+
+class NEmbed(NBlock):
+    block_type = "embed"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._url -> url string
+        """
+        super().__init__(header, block_id)
+        self._url = None
+
+    @property
+    def url(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        self._url = self.data[self.block_type]['url']
+        return self._url
+
+    @url.setter
+    def url(self, value: str):
+        self._url = value
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "url": self._url,
+            }
         if self.children:
             par_dict['children'] = self.children
         return {
-            'type': 'synced_block',
-            'synced_block': par_dict
+            'type': 'embed',
+            'embed': par_dict
+        }
+
+
+class NEquation(NBlock):
+    block_type = "equation"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._expression -> equation expression
+        """
+        super().__init__(header, block_id)
+        self._expression = None
+
+    @property
+    def expression(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        self._expression = self.data[self.block_type]['expression']
+        return self._expression
+
+    @expression.setter
+    def expression(self, value: str):
+        self._expression = value
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "expression": self._expression
+        }
+        return {
+            'type': 'equation',
+            'equation': par_dict
         }
 
 
@@ -487,58 +565,177 @@ class NFile(NBlock):
         }
 
 
-class NPdf(NBlock):
-    block_type = "pdf"
+class NHeading1(NBlock):
+    block_type = "heading_1"
 
     def __init__(self, header: dict, block_id: str):
         """
-        self._caption -> list of richeText Objects
-        self._type -> url string
-        self._object -> type of loaded pdf
+        self._rich_text -> list of richeText Objects
+        self._color -> paragraph base color
+        self._is_toggleable -> if true it has children
         """
         super().__init__(header, block_id)
-        self._caption = None
-        self._file_object = None
+        self._rich_text = None
+        self._is_toggleable = None
+        self._color = None
+
 
     @property
-    def caption(self):
+    def is_toggleable(self):
         if not hasattr(self, "data"):
             self.get_content()
-        rich_list = NRichList()
-        for rich in self.data[self.block_type]['caption']:
-            rich_list.append(NRichText(rich))
-        self._caption = rich_list
-        return self._caption
+        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
+        return self._is_toggleable
 
-    @caption.setter
-    def caption(self, value: NRichList):
-        self._caption = value
+    @is_toggleable.setter
+    def is_toggleable(self, value: bool):
+        self._is_toggleable = value
+
 
     @property
-    def file_object(self):
+    def color(self):
         if not hasattr(self, "data"):
             self.get_content()
-        self.block_type = self.data['type']
-        type_dict = dict(self.data['file'][self.block_type])
-        type_dict.update({'type': self.block_type})
-        self._file_object = n_file(type_dict)
-        return self._file_object
+        if self.data[self.block_type]['color'] not in Color:
+            raise ObjectError("The color of the paragraph is not allowed.")
+        self._color = self.data[self.block_type]['color']
+        return self._color
 
-    @file_object.setter
-    def file_object(self, value: dict):
-        self._file_object = value
+    @color.setter
+    def color(self, value: Color | str):
+        if not isinstance(value, Color):
+            if value in Color:
+                self._color = value
+        else:
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
-                "caption": self._get_rich_text_dict(att=self._caption),
-                "type": self.block_type,
-                f'{self.block_type}': self._file_object.to_dict(),
+                "rich_text": self._get_rich_text_dict(),
+                "color": self._color,
+                "is_toggleable": self.is_toggleable,
             }
         if self.children:
             par_dict['children'] = self.children
         return {
-            'type': 'pdf',
-            'pdf': par_dict
+            'type': f'{self.block_type}',
+            f'{self.block_type}' : par_dict
+        }
+
+
+class NHeading2(NBlock):
+    block_type = "heading_2"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._rich_text -> list of richeText Objects
+        self._color -> paragraph base color
+        self._is_toggleable -> if true it has children
+        """
+        super().__init__(header, block_id)
+        self._rich_text = None
+        self._is_toggleable = None
+        self._color = None
+
+
+    @property
+    def is_toggleable(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
+        return self._is_toggleable
+
+    @is_toggleable.setter
+    def is_toggleable(self, value: bool):
+        self._is_toggleable = value
+
+
+    @property
+    def color(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        if self.data[self.block_type]['color'] not in Color:
+            raise ObjectError("The color of the paragraph is not allowed.")
+        self._color = self.data[self.block_type]['color']
+        return self._color
+
+    @color.setter
+    def color(self, value: Color | str):
+        if not isinstance(value, Color):
+            if value in Color:
+                self._color = value
+        else:
+            self._color = value.value()
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "rich_text": self._get_rich_text_dict(),
+                "color": self._color,
+                "is_toggleable": self.is_toggleable,
+            }
+        if self.children:
+            par_dict['children'] = self.children
+        return {
+            'type': f'{self.block_type}',
+            f'{self.block_type}' : par_dict
+        }
+
+
+class NHeading3(NBlock):
+    block_type = "heading_3"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._rich_text -> list of richeText Objects
+        self._color -> paragraph base color
+        self._is_toggleable -> if true it has children
+        """
+        super().__init__(header, block_id)
+        self._rich_text = None
+        self._is_toggleable = None
+        self._color = None
+
+
+    @property
+    def is_toggleable(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
+        return self._is_toggleable
+
+    @is_toggleable.setter
+    def is_toggleable(self, value: bool):
+        self._is_toggleable = value
+
+
+    @property
+    def color(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        if self.data[self.block_type]['color'] not in Color:
+            raise ObjectError("The color of the paragraph is not allowed.")
+        self._color = self.data[self.block_type]['color']
+        return self._color
+
+    @color.setter
+    def color(self, value: Color | str):
+        if not isinstance(value, Color):
+            if value in Color:
+                self._color = value
+        else:
+            self._color = value.value()
+
+    def _get_spec_dict(self):
+        par_dict = {
+                "rich_text": self._get_rich_text_dict(),
+                "color": self._color,
+                "is_toggleable": self.is_toggleable,
+            }
+        if self.children:
+            par_dict['children'] = self.children
+        return {
+            'type': f'{self.block_type}',
+            f'{self.block_type}' : par_dict
         }
 
 
@@ -597,52 +794,59 @@ class NImage(NBlock):
         }
 
 
-class NEmbed(NBlock):
-    block_type = "embed"
+class NSyncedBlock(NBlock):
+    block_type = "synced_block"
 
     def __init__(self, header: dict, block_id: str):
-        """
-        self._url -> url string
-        """
         super().__init__(header, block_id)
-        self._url = None
+        self._synced_from = None
+        self._sync_parent_id = None
 
     @property
-    def url(self):
+    def synced_from(self):
         if not hasattr(self, "data"):
             self.get_content()
-        self._url = self.data[self.block_type]['url']
-        return self._url
+        self._synced_from = self.data[self.block_type]['synced_from']
+        return self._synced_from
 
-    @url.setter
-    def url(self, value: str):
-        self._url = value
+    @synced_from.setter
+    def synced_from(self, value: str):
+        self._synced_from = {
+            "block_id": value
+        }
+
+    @property
+    def sync_parent_id(self):
+        if not hasattr(self, "data"):
+            self.get_content()
+        if not self.synced_from:
+            return None
+        return self.data[self.block_type]['synced_from']['block_id']
 
     def _get_spec_dict(self):
         par_dict = {
-                "url": self._url,
-            }
+            "synced_from": self.synced_from,
+        }
         if self.children:
             par_dict['children'] = self.children
         return {
-            'type': 'embed',
-            'embed': par_dict
+            'type': 'synced_block',
+            'synced_block': par_dict
         }
 
 
-class NCode(NBlock):
-    block_type = "code"
+class NPdf(NBlock):
+    block_type = "pdf"
 
     def __init__(self, header: dict, block_id: str):
         """
         self._caption -> list of richeText Objects
-        self._rich_text -> rich_text object
-        self._language -> language string
+        self._type -> url string
+        self._object -> type of loaded pdf
         """
         super().__init__(header, block_id)
         self._caption = None
-        self._rich_text = None
-        self._language = None
+        self._file_object = None
 
     @property
     def caption(self):
@@ -659,142 +863,30 @@ class NCode(NBlock):
         self._caption = value
 
     @property
-    def language(self):
+    def file_object(self):
         if not hasattr(self, "data"):
             self.get_content()
-        if self.data[self.block_type]['language'] in Language._value2member_map_:
-            self._language = self.data[self.block_type]['language']
-            return self._language
-        raise LanguageCodeError(f"Language Code {self.data[self.block_type]['language']} not supported.")
+        self.block_type = self.data['type']
+        type_dict = dict(self.data['file'][self.block_type])
+        type_dict.update({'type': self.block_type})
+        self._file_object = n_file(type_dict)
+        return self._file_object
 
-    @language.setter
-    def language(self, value: str):
-        if value not in Language._value2member_map_:
-            raise LanguageCodeError(f"Language Code {self.data[self.block_type]['language']} not supported.")
-        self._language = value
+    @file_object.setter
+    def file_object(self, value: dict):
+        self._file_object = value
 
     def _get_spec_dict(self):
         par_dict = {
                 "caption": self._get_rich_text_dict(att=self._caption),
-                "rich_text": self._get_rich_text_dict(),
-                "language": self._language,
-            }
-
-        return {
-            'type': 'code',
-            'code': par_dict
-        }
-
-
-class NCallout(NBlock):
-    block_type = "callout"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._rich_text -> list of richeText Objects
-        self._icon -> callout icon -> NIcon(Ntype)
-        self._color -> callout color -> Color
-        """
-        super().__init__(header, block_id)
-        self._icon = None
-        self._color = None
-        self._rich_text = None
-
-    @property
-    def icon(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._icon = NIcon(self.data[self.block_type]['icon'])
-        return self._icon
-
-    @icon.setter
-    def icon(self, value: NIcon):
-        self._icon = value
-
-    @property
-    def color(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        if self.data[self.block_type]['color'] not in Color:
-            raise ObjectError("The color of the paragraph is not allowed.")
-        self._color = self.data[self.block_type]['color']
-        return self._color
-
-    @color.setter
-    def color(self, value: Color | str):
-        if not isinstance(value, Color):
-            if value in Color:
-                self.color = value
-        else:
-            self.color = value.value()
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "rich_text": self._get_rich_text_dict(),
-                "icon": self._icon.to_dict(),
-                "color": self._color,
-            }
-        return {
-            'type': 'callout',
-            'callout': par_dict
-        }
-
-
-class NHeading1(NBlock):
-    block_type = "heading_1"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._rich_text -> list of richeText Objects
-        self._color -> paragraph base color
-        self._is_toggleable -> if true it has children
-        """
-        super().__init__(header, block_id)
-        self._rich_text = None
-        self._is_toggleable = None
-        self._color = None
-
-
-    @property
-    def is_toggleable(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
-        return self._is_toggleable
-
-    @is_toggleable.setter
-    def is_toggleable(self, value: bool):
-        self._is_toggleable = value
-
-
-    @property
-    def color(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        if self.data[self.block_type]['color'] not in Color:
-            raise ObjectError("The color of the paragraph is not allowed.")
-        self._color = self.data[self.block_type]['color']
-        return self._color
-
-    @color.setter
-    def color(self, value: Color | str):
-        if not isinstance(value, Color):
-            if value in Color:
-                self.color = value
-        else:
-            self.color = value.value()
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "rich_text": self._get_rich_text_dict(),
-                "color": self._color,
-                "is_toggleable": self.is_toggleable,
+                "type": self.block_type,
+                f'{self.block_type}': self._file_object.to_dict(),
             }
         if self.children:
             par_dict['children'] = self.children
         return {
-            'type': f'{self.block_type}',
-            f'{self.block_type}' : par_dict
+            'type': 'pdf',
+            'pdf': par_dict
         }
 
 
@@ -821,129 +913,13 @@ class NTableOfContent(NBlock):
     def color(self, value: Color | str):
         if not isinstance(value, Color):
             if value in Color:
-                self.color = value
+                self._color = value
         else:
-            self.color = value.value()
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
                 "color": self._color,
-            }
-        if self.children:
-            par_dict['children'] = self.children
-        return {
-            'type': f'{self.block_type}',
-            f'{self.block_type}' : par_dict
-        }
-
-
-class NHeading2(NBlock):
-    block_type = "heading_2"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._rich_text -> list of richeText Objects
-        self._color -> paragraph base color
-        self._is_toggleable -> if true it has children
-        """
-        super().__init__(header, block_id)
-        self._rich_text = None
-        self._is_toggleable = None
-        self._color = None
-
-
-    @property
-    def is_toggleable(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
-        return self._is_toggleable
-
-    @is_toggleable.setter
-    def is_toggleable(self, value: bool):
-        self._is_toggleable = value
-
-
-    @property
-    def color(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        if self.data[self.block_type]['color'] not in Color:
-            raise ObjectError("The color of the paragraph is not allowed.")
-        self._color = self.data[self.block_type]['color']
-        return self._color
-
-    @color.setter
-    def color(self, value: Color | str):
-        if not isinstance(value, Color):
-            if value in Color:
-                self.color = value
-        else:
-            self.color = value.value()
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "rich_text": self._get_rich_text_dict(),
-                "color": self._color,
-                "is_toggleable": self.is_toggleable,
-            }
-        if self.children:
-            par_dict['children'] = self.children
-        return {
-            'type': f'{self.block_type}',
-            f'{self.block_type}' : par_dict
-        }
-
-
-class NHeading3(NBlock):
-    block_type = "heading_3"
-
-    def __init__(self, header: dict, block_id: str):
-        """
-        self._rich_text -> list of richeText Objects
-        self._color -> paragraph base color
-        self._is_toggleable -> if true it has children
-        """
-        super().__init__(header, block_id)
-        self._rich_text = None
-        self._is_toggleable = None
-        self._color = None
-
-
-    @property
-    def is_toggleable(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        self._is_toggleable = bool(self.data[self.block_type]['is_toggleable'])
-        return self._is_toggleable
-
-    @is_toggleable.setter
-    def is_toggleable(self, value: bool):
-        self._is_toggleable = value
-
-
-    @property
-    def color(self):
-        if not hasattr(self, "data"):
-            self.get_content()
-        if self.data[self.block_type]['color'] not in Color:
-            raise ObjectError("The color of the paragraph is not allowed.")
-        self._color = self.data[self.block_type]['color']
-        return self._color
-
-    @color.setter
-    def color(self, value: Color | str):
-        if not isinstance(value, Color):
-            if value in Color:
-                self.color = value
-        else:
-            self.color = value.value()
-
-    def _get_spec_dict(self):
-        par_dict = {
-                "rich_text": self._get_rich_text_dict(),
-                "color": self._color,
-                "is_toggleable": self.is_toggleable,
             }
         if self.children:
             par_dict['children'] = self.children
@@ -1080,9 +1056,9 @@ class NParagraph(NBlock):
     def color(self, value: Color | str):
         if not isinstance(value, Color):
             if value in Color:
-                self.color = value
+                self._color = value
         else:
-            self.color = value.value()
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
@@ -1122,9 +1098,9 @@ class NToggle(NBlock):
     def color(self, value: Color | str):
         if not isinstance(value, Color):
             if value in Color:
-                self.color = value
+                self._color = value
         else:
-            self.color = value.value()
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
@@ -1177,9 +1153,9 @@ class NToDo(NBlock):
     def color(self, value: Color | str):
         if not isinstance(value, Color):
             if value in Color:
-                self.color = value
+                self._color = value
         else:
-            self.color = value.value()
+            self._color = value.value()
 
     def _get_spec_dict(self):
         par_dict = {
@@ -1313,7 +1289,7 @@ class NTable(NBlock):
                 rich_list = NRichList()
                 for obj in val:
                     rich_list.append(NRichText(obj))
-                row.append(rich_list_text(rich_list))
+                row.append(rich_list.text)
             rows.append(row)
         return rows
 
@@ -1331,6 +1307,7 @@ class NTable(NBlock):
                 raise ValueError("Check the number of columns in all data")
         if n_col != self.table_width:
             raise ValueError("Check the number of columns in all data")
+        # per ogni riga
         for idx, new_data in enumerate(data):
             """
             (self.children[0].data['table_row']['cells'] -> lista di child
@@ -1342,22 +1319,13 @@ class NTable(NBlock):
             new_data è una lista: [1, 2, 3]
             table cell can contains just test
             """
-            if len(self.children[idx].data['table_row']['cells'][0]) != 1:
-                raise ValueError("Text formatting have to be the same for the all table")
-            for jdx, data in enumerate(new_data):
-                self.children[idx].data['table_row']['cells'][jdx][0]['text']['content'] = data
-                self.children[idx].data['table_row']['cells'][jdx][0]['plain_text'] = data
+            self.children[idx].cells = new_data
 
     def _get_spec_dict(self):
         bl_dict = {
-                "table_width": self._table_width,
                 "has_row_header": self._has_row_header,
                 "has_column_header": self._has_column_header,
             }
-        if self.children:
-            bl_dict['children'] = []
-            for child in self.children:
-                bl_dict['children'].append(child._get_spec_dict())
         return {
             'type': 'table',
             'table': bl_dict
@@ -1388,7 +1356,44 @@ class NTableRow(NBlock):
         return self._cells
 
     @cells.setter
-    def cells(self, value: list[NRichList]):
+    def cells(self, cells: list):
+        if self._cells:
+            if len(self._cells[0]) != 1:
+                raise ValueError("Text formatting have to be the same for the all table")
+            if len(cells) != len(self._cells):
+                raise ValueError("Number of columns doesn't match")
+            for jdx, el in enumerate(self._cells):
+                el[0]['text'].data['content'] = cells[jdx]
+                el[0].data['plain_text'] = cells[jdx]
+            self.update_block()
+        else:
+            self._cells = []
+            for cell in cells:
+                cell_rich = NRichList()
+                cell_obj = NRichText(
+                    {
+                        "type": "text",
+                        "text": {
+                            "content": str(cell),
+                            "link": None
+                        },
+                        "annotations": {
+                            "bold": False,
+                            "italic": False,
+                            "strikethrough": False,
+                            "underline": False,
+                            "code": False,
+                            "color": "default"
+                        },
+                        "plain_text": str(cell),
+                        "href": None
+                    }
+                )
+                cell_rich.append(cell_obj)
+                self._cells.append(cell_rich)
+            self.cells = cells
+
+    def add_row(self, value: NRichList):
         load_data = []
         for v in value:
             row_list = []
@@ -1405,12 +1410,27 @@ class NTableRow(NBlock):
                 "cells": cells,
             }
 
-        if self.children:
-            bl_dict['children'] = self.children
-
         return {
             'type': 'table_row',
             'table_row': bl_dict
+        }
+
+class NTitle(NBlock):
+    block_type = "title"
+
+    def __init__(self, header: dict, block_id: str):
+        """
+        self._rich_text -> list of richeText Objects
+        self._icon -> callout icon -> NIcon(Ntype)
+        self._color -> callout color -> Color
+        """
+        super().__init__(header, block_id)
+        self._rich_text = None
+
+    def _get_spec_dict(self):
+        return {
+            'type': 'title',
+            'title': self._get_rich_text_dict()
         }
 
 
