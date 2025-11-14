@@ -28,6 +28,7 @@ class NUser(NObj):
     obj_type = "user"
 
     def __init__(self, header: dict, block_id: str = None):
+        self.data = None
         if block_id:
             self.block_id = block_id.replace('-', '')  # inserito per quanto si recupera la pagina da un database
             self.get_url = f"https://api.notion.com/v1/users/{block_id}"

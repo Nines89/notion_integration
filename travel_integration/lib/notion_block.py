@@ -4,7 +4,7 @@ from utils import Color, Language
 from notion_object import NObj, ObjectError
 from notion_client import NotionApiClient
 from notion_types import (
-    NRichList, rich_list_text, NRichText, Ntype, NText, NIcon
+    NRichList, NRichText, Ntype, NText, NIcon
 )
 from notion_file import n_file
 

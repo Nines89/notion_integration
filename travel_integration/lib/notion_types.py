@@ -19,8 +19,12 @@ class NDate(Ntype):
     def __init__(self, data: str | datetime): # noqa
         if isinstance(data, str):
             self.data = datetime.fromisoformat(data.replace("Z", "+00:00"))
+        else:
+            self.data = data
 
     def to_dict(self):
+        if self.data is None:
+            return None
         return self.data.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
     def __repr__(self):
@@ -137,7 +141,7 @@ class NRichText(Ntype):
                 elif key == 'mention':
                     self.data[key] = NMentionType(item)
         if self.data.keys() != self.basic_schema.keys():
-            raise SchemaError(f"Received Keys are not the expected: {self.basic_schema.keys()}")
+            raise SchemaError(f"Received Keys {self.data.keys()} are not the expected: {self.basic_schema.keys()}")
 
     @property
     def type(self):
@@ -227,17 +231,22 @@ def simple_rich_text_list(content: str, t_type: str = 'text'):
 
 
 if __name__ == '__main__':
-    l = NRichList()
-    list_of_rich = [
-        {'type': 'text', 'text': {'content': 'Ci mettiamo di sicuro ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': 'Ci mettiamo di sicuro ', 'href': None},
-        {'type': 'text', 'text': {'content': 'un testo, in parte', 'link': None}, 'annotations': {'bold': True, 'italic': True, 'strikethrough': True, 'underline': True, 'code': False, 'color': 'orange'}, 'plain_text': 'un testo, in parte', 'href': None},
-        {'type': 'text', 'text': {'content': ' colorato e con un ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': ' colorato e con un ', 'href': None},
-        {'type': 'text', 'text': {'content': 'code ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': True, 'color': 'default'}, 'plain_text': 'code ', 'href': None},
-        {'type': 'text', 'text': {'content': 'dentro', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': 'dentro', 'href': None}]
-    for el in list_of_rich:
-        l.append(NRichText(el))
-    print(l.text)
-    print(l.to_dict())
+    ################### Rich Text #########################################
+    # l = NRichList()
+    # list_of_rich = [
+    #     {'type': 'text', 'text': {'content': 'Ci mettiamo di sicuro ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': 'Ci mettiamo di sicuro ', 'href': None},
+    #     {'type': 'text', 'text': {'content': 'un testo, in parte', 'link': None}, 'annotations': {'bold': True, 'italic': True, 'strikethrough': True, 'underline': True, 'code': False, 'color': 'orange'}, 'plain_text': 'un testo, in parte', 'href': None},
+    #     {'type': 'text', 'text': {'content': ' colorato e con un ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': ' colorato e con un ', 'href': None},
+    #     {'type': 'text', 'text': {'content': 'code ', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': True, 'color': 'default'}, 'plain_text': 'code ', 'href': None},
+    #     {'type': 'text', 'text': {'content': 'dentro', 'link': None}, 'annotations': {'bold': False, 'italic': False, 'strikethrough': False, 'underline': False, 'code': False, 'color': 'default'}, 'plain_text': 'dentro', 'href': None}]
+    # for el in list_of_rich:
+    #     l.append(NRichText(el))
+    # print(l.text)
+    # print(l.to_dict())
+    ################################################################################
+
+    d = NDate(datetime(2025, 4, 24, 22, 49, 22))
+    print(d.to_dict())
 
 
 
